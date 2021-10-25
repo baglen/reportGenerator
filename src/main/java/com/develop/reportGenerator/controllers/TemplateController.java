@@ -14,6 +14,7 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.util.Date;
+import java.util.List;
 import java.util.Objects;
 
 import static org.springframework.http.HttpStatus.*;
@@ -63,5 +64,10 @@ public class TemplateController {
         else{
             throw new ResponseStatusException(NO_CONTENT, "Template title was null");
         }
+    }
+
+    @GetMapping("/templates")
+    public List<Template> getTemplates(){
+        return templateService.findAllTemplates();
     }
 }
