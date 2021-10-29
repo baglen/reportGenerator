@@ -1,17 +1,18 @@
 package com.develop.reportGenerator.controllers;
 
+import com.develop.reportGenerator.repositories.TemplateRepository;
 import com.develop.reportGenerator.request.Content;
 import com.develop.reportGenerator.request.RepeatPage;
 import com.develop.reportGenerator.request.Report;
-import com.develop.reportGenerator.services.TemplateService;
-import com.develop.reportGenerator.utils.ReportUtil;
-import com.google.gson.Gson;
 import org.apache.log4j.BasicConfigurator;
 import org.docx4j.openpackaging.exceptions.Docx4JException;
 import org.docx4j.openpackaging.packages.WordprocessingMLPackage;
 import org.docx4j.org.apache.poi.util.IOUtils;
 import org.docx4j.wml.ObjectFactory;
 import org.docx4j.wml.P;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Bean;
+import org.springframework.stereotype.Component;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.server.ResponseStatusException;
 import org.wickedsource.docxstamper.DocxStamper;
@@ -25,26 +26,32 @@ import java.util.Date;
 import static com.develop.reportGenerator.utils.ReportUtil.*;
 import static org.springframework.http.HttpStatus.NOT_FOUND;
 
+@Component
 @RestController
 public class ReportController {
 
-    TemplateService templateService = new TemplateService();
+    final TemplateRepository templateRepository;
+
+    @Autowired
+    public ReportController(TemplateRepository templateRepository) {
+        this.templateRepository = templateRepository;
+    }
 
     @PostMapping(value = "/makeReport", produces="application/vnd.openxmlformats-officedocument.wordprocessingml.document")
-    public @ResponseBody byte[] makeReport(@RequestBody String requestReport, @RequestParam("templateId") int templateId){
+    public @ResponseBody byte[] makeReport(@RequestBody Report requestReport, @RequestParam("templateId") int templateId){
         long time = System.currentTimeMillis();
-        Report report = new Gson().fromJson(requestReport, Report.class);
         DateFormat dateFormat = new SimpleDateFormat("dd-MM-yyyy");
-        File outputFile = new File("reports/report-"+ report.getPrjTitle()
+        File outputFile = new File("reports/report-"+ requestReport.getPrjTitle()
                 +"-"+ dateFormat.format(new Date())+".docx");
         BasicConfigurator.configure();
-        ReportUtil.setImagesToReport(report);
+        System.out.println(requestReport.getRepeatPage().size());
+        setImagesToReport(requestReport);
         InputStream templateInputStream;
         OutputStream documentOutputStream = null;
         WordprocessingMLPackage document = null;
         try {
-            if(templateService.findTemplate((long) templateId).isPresent()) {
-                templateInputStream = new ByteArrayInputStream(templateService.findTemplate((long) templateId).get().getFile());
+            if(templateRepository.findById((long) templateId).isPresent()) {
+                templateInputStream = new ByteArrayInputStream(templateRepository.findById((long) templateId).get().getFile());
                 documentOutputStream = new FileOutputStream(outputFile);
                 document = WordprocessingMLPackage.load(templateInputStream);
             }
@@ -57,7 +64,7 @@ public class ReportController {
         }
         int contentCounter = 0;
         ObjectFactory objectFactory = new ObjectFactory();
-        for(RepeatPage repeatPage : report.getRepeatPage()) {
+        for(RepeatPage repeatPage : requestReport.getRepeatPage()) {
             for (Content content : repeatPage.getContent()) {
                 contentCounter++;
                 document.getMainDocumentPart().addObject(makeTitleParagraph(repeatPage.getType() + " " +
@@ -73,13 +80,13 @@ public class ReportController {
                 }
                 imagesParagraph = getFormatParagraph(objectFactory, imagesParagraph);
                 document.getMainDocumentPart().addObject(imagesParagraph);
-                if(contentCounter != report.getRepeatPage().size() - 1) {
+                if(contentCounter != requestReport.getRepeatPage().size() - 1) {
                     document.getMainDocumentPart().addObject(makeSpacerParagraph(objectFactory));
                 }
             }
         }
         DocxStamper stamper = new DocxStamperConfiguration().build();
-        stamper.stamp(document, report, documentOutputStream);
+        stamper.stamp(document, requestReport, documentOutputStream);
         FileInputStream documentInputStream;
         byte[] outputDocumentArray = null;
         try {

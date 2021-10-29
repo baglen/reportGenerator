@@ -1,30 +1,39 @@
 package com.develop.reportGenerator.models;
 
-import org.hibernate.annotations.Type;
-import org.springframework.format.annotation.DateTimeFormat;
+import com.fasterxml.jackson.annotation.JsonFormat;
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Scope;
 
 import javax.persistence.*;
-import java.util.Date;
+import java.time.ZonedDateTime;
+
 
 @Entity
 @Table(name = "template")
 public class Template {
 
     @Id
+    @Column(name = "id")
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
     @Column(name = "title")
     private String title;
-    @Column(name = "creationDate")
-    @Temporal(TemporalType.TIMESTAMP)
-    private Date creationDate;
+    @JsonFormat(pattern="dd-MM-yyyy HH:mm")
+    @Column(name = "creation_date")
+    private ZonedDateTime creationDate;
     @Column(name = "file")
     private byte[] fileBytes;
 
     public Template() {
     }
 
-    public Template(String title, Date creationDate, byte[] fileBytes) {
+    @Bean
+    @Scope("prototype")
+    public Template template(){
+        return new Template();
+    }
+
+    public Template(String title, ZonedDateTime creationDate, byte[] fileBytes) {
         this.title = title;
         this.creationDate = creationDate;
         this.fileBytes = fileBytes;
@@ -46,11 +55,11 @@ public class Template {
         this.title = title;
     }
 
-    public Date getCreationDate() {
+    public ZonedDateTime getCreationDate() {
         return creationDate;
     }
 
-    public void setCreationDate(Date creationDate) {
+    public void setCreationDate(ZonedDateTime creationDate) {
         this.creationDate = creationDate;
     }
 
