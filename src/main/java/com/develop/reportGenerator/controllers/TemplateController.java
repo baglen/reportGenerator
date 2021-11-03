@@ -41,13 +41,13 @@ public class TemplateController {
                     return templateToUpload;
                 }
             } catch (IOException e) {
-                log.error(e.getMessage());
+                log.error("Failed to read template file", e);
+                throw new ResponseStatusException(INTERNAL_SERVER_ERROR);
             }
         }
         else {
             throw new ResponseStatusException(NO_CONTENT, "Template is not set");
         }
-        return null;
     }
 
     @Transactional

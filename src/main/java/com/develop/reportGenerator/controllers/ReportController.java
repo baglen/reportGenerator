@@ -12,6 +12,7 @@ import org.docx4j.wml.ObjectFactory;
 import org.docx4j.wml.P;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.client.HttpStatusCodeException;
 import org.springframework.web.server.ResponseStatusException;
 import org.wickedsource.docxstamper.DocxStamper;
 import org.wickedsource.docxstamper.DocxStamperConfiguration;
@@ -22,7 +23,7 @@ import java.text.SimpleDateFormat;
 import java.util.Date;
 
 import static com.develop.reportGenerator.utils.ReportUtil.*;
-import static org.springframework.http.HttpStatus.NOT_FOUND;
+import static org.springframework.http.HttpStatus.*;
 
 
 @RestController
@@ -45,8 +46,8 @@ public class ReportController {
                 +"-"+ dateFormat.format(new Date())+".docx");
         setImagesToReport(requestReport);
         InputStream templateInputStream;
-        OutputStream documentOutputStream = null;
-        WordprocessingMLPackage document = null;
+        OutputStream documentOutputStream;
+        WordprocessingMLPackage document;
         Template template = templateRepository.findById(templateId)
                 .orElseThrow(() -> new ResponseStatusException(NOT_FOUND, "Unable to find template"));
         try {
@@ -54,8 +55,12 @@ public class ReportController {
             documentOutputStream = new FileOutputStream(outputFile);
             document = WordprocessingMLPackage.load(templateInputStream);
         }
-        catch (FileNotFoundException | Docx4JException e) {
-            log.error(e.getMessage());
+        catch (FileNotFoundException e) {
+            log.error("Output file not found", e);
+            throw new ResponseStatusException(INTERNAL_SERVER_ERROR);
+        } catch (Docx4JException e) {
+            log.error("Error occurred while loading template", e);
+            throw new ResponseStatusException(INTERNAL_SERVER_ERROR);
         }
         int contentCounter = 0;
         ObjectFactory objectFactory = new ObjectFactory();
@@ -70,7 +75,8 @@ public class ReportController {
                     try {
                         addImageToPara(document, objectFactory, imagesParagraph, image.getImageBytes());
                     } catch (Exception e) {
-                        log.error(e.getMessage());
+                        log.error("Error occurred while attaching images", e);
+                        throw new ResponseStatusException(INTERNAL_SERVER_ERROR);
                     }
                 }
                 imagesParagraph = getFormatParagraph(objectFactory, imagesParagraph);
@@ -83,13 +89,17 @@ public class ReportController {
         DocxStamper stamper = new DocxStamperConfiguration().build();
         stamper.stamp(document, requestReport, documentOutputStream);
         FileInputStream documentInputStream;
-        byte[] outputDocumentArray = null;
+        byte[] outputDocumentArray;
         try {
             documentOutputStream.close();
             documentInputStream = new FileInputStream(outputFile);
             outputDocumentArray = IOUtils.toByteArray(documentInputStream);
+        }catch (FileNotFoundException e){
+            log.error("Report file not found", e);
+            throw new ResponseStatusException(INTERNAL_SERVER_ERROR);
         } catch (IOException e) {
-            log.error(e.getMessage());
+            log.error("Error occurred while converting report", e);
+            throw new ResponseStatusException(INTERNAL_SERVER_ERROR);
         }
         log.info("Elapsed time(milliseconds): "+ (System.currentTimeMillis() - time));
         return outputDocumentArray;
