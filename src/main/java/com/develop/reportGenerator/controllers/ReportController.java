@@ -95,7 +95,7 @@ public class ReportController {
         } catch (IOException e) {
             e.printStackTrace();
         }
-        log.debug("Elapsed time(milliseconds): "+ (System.currentTimeMillis() - time));
+        log.info("Elapsed time(milliseconds): "+ (System.currentTimeMillis() - time));
         return outputDocumentArray;
     }
 
