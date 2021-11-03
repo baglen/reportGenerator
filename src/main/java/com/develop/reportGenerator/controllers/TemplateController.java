@@ -2,23 +2,20 @@ package com.develop.reportGenerator.controllers;
 
 import com.develop.reportGenerator.models.Template;
 import com.develop.reportGenerator.repositories.TemplateRepository;
+import com.develop.reportGenerator.response.TemplateResponse;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.context.ApplicationContext;
-import org.springframework.context.support.ClassPathXmlApplicationContext;
-import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.server.ResponseStatusException;
-
 import java.io.IOException;
 import java.time.ZonedDateTime;
+import java.util.ArrayList;
 import java.util.List;
 
 import static org.springframework.http.HttpStatus.*;
 
 @RestController
-@Component
 public class TemplateController {
 
     final TemplateRepository templateRepository;
@@ -28,20 +25,16 @@ public class TemplateController {
         this.templateRepository = templateRepository;
     }
 
-    private final ApplicationContext applicationContext = new ClassPathXmlApplicationContext("scopes.xml");
-
     @RequestMapping(value = "/uploadTemplate", method = RequestMethod.POST)
-    public Template uploadTemplate(@RequestParam("template") MultipartFile template) {
-        if(template.getOriginalFilename() != "") {
-            Template templateToUpload = applicationContext.getBean("template", Template.class);
+    public @ResponseBody Template uploadTemplate(@RequestParam("template") MultipartFile template) {
+        if(!template.getOriginalFilename().isBlank()) {
             try {
                 if(templateRepository.existsTemplateByTitle(template.getOriginalFilename())) {
                     throw new ResponseStatusException(BAD_REQUEST, "Template already exists");
                 }
                 else {
-                    templateToUpload.setTitle(template.getOriginalFilename());
-                    templateToUpload.setFile(template.getBytes());
-                    templateToUpload.setCreationDate(ZonedDateTime.now());
+                    Template templateToUpload = new Template(template.getOriginalFilename(),
+                            ZonedDateTime.now(), template.getBytes());
                     templateRepository.save(templateToUpload);
                     return templateToUpload;
                 }
@@ -72,7 +65,13 @@ public class TemplateController {
     }
 
     @GetMapping("/templates")
-    public List<Template> getTemplates(){
-        return templateRepository.findAll();
+    public @ResponseBody List<TemplateResponse> getTemplates(){
+        List<TemplateResponse> templates = new ArrayList<>();
+        for(Template template: templateRepository.findAll()) {
+            TemplateResponse templateResponse = new TemplateResponse(template.getId(),
+                    template.getTitle(), template.getCreationDate());
+            templates.add(templateResponse);
+        }
+        return templates;
     }
 }

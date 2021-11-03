@@ -1,35 +1,36 @@
 
 package com.develop.reportGenerator.request;
 
-import com.google.gson.annotations.Expose;
-import com.google.gson.annotations.SerializedName;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import org.wickedsource.docxstamper.replace.typeresolver.image.Image;
 
 import java.util.List;
 
 public class Content {
 
-    @SerializedName("text")
-    @Expose
+    @JsonProperty("text")
     private String text;
-    @SerializedName("image")
-    @Expose
+    @JsonProperty("image")
     private List<String> image = null;
 
     private List<Image> images;
 
+    @JsonProperty("text")
     public String getText() {
         return text;
     }
 
+    @JsonProperty("text")
     public void setText(String text) {
         this.text = text;
     }
 
+    @JsonProperty("image")
     public List<String> getImage() {
         return image;
     }
 
+    @JsonProperty("image")
     public void setImage(List<String> image) {
         this.image = image;
     }
@@ -41,5 +42,4 @@ public class Content {
     public void setImages(List<Image> images) {
         this.images = images;
     }
-
 }

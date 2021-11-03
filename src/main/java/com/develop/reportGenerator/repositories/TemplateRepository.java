@@ -1,6 +1,7 @@
 package com.develop.reportGenerator.repositories;
 
 import com.develop.reportGenerator.models.Template;
+import com.develop.reportGenerator.response.TemplateResponse;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 

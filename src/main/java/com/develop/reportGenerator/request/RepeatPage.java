@@ -1,32 +1,33 @@
 
 package com.develop.reportGenerator.request;
 
-import com.google.gson.annotations.Expose;
-import com.google.gson.annotations.SerializedName;
+import com.fasterxml.jackson.annotation.JsonProperty;
 
 import java.util.List;
 
 public class RepeatPage {
 
-    @SerializedName("type")
-    @Expose
+    @JsonProperty("type")
     private String type;
-    @SerializedName("content")
-    @Expose
+    @JsonProperty("content")
     private List<Content> content = null;
 
+    @JsonProperty("type")
     public String getType() {
         return type;
     }
 
+    @JsonProperty("type")
     public void setType(String type) {
         this.type = type;
     }
 
+    @JsonProperty("content")
     public List<Content> getContent() {
         return content;
     }
 
+    @JsonProperty("content")
     public void setContent(List<Content> content) {
         this.content = content;
     }

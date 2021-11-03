@@ -1,18 +1,16 @@
 package com.develop.reportGenerator.controllers;
 
+import com.develop.reportGenerator.models.Template;
 import com.develop.reportGenerator.repositories.TemplateRepository;
 import com.develop.reportGenerator.request.Content;
 import com.develop.reportGenerator.request.RepeatPage;
 import com.develop.reportGenerator.request.Report;
-import org.apache.log4j.BasicConfigurator;
 import org.docx4j.openpackaging.exceptions.Docx4JException;
 import org.docx4j.openpackaging.packages.WordprocessingMLPackage;
 import org.docx4j.org.apache.poi.util.IOUtils;
 import org.docx4j.wml.ObjectFactory;
 import org.docx4j.wml.P;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.context.annotation.Bean;
-import org.springframework.stereotype.Component;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.server.ResponseStatusException;
 import org.wickedsource.docxstamper.DocxStamper;
@@ -26,7 +24,7 @@ import java.util.Date;
 import static com.develop.reportGenerator.utils.ReportUtil.*;
 import static org.springframework.http.HttpStatus.NOT_FOUND;
 
-@Component
+
 @RestController
 public class ReportController {
 
@@ -37,30 +35,31 @@ public class ReportController {
         this.templateRepository = templateRepository;
     }
 
+    private static final org.slf4j.Logger log = org.slf4j.LoggerFactory.getLogger(ReportController.class);
+
     @PostMapping(value = "/makeReport", produces="application/vnd.openxmlformats-officedocument.wordprocessingml.document")
     public @ResponseBody byte[] makeReport(@RequestBody Report requestReport, @RequestParam("templateId") int templateId){
         long time = System.currentTimeMillis();
         DateFormat dateFormat = new SimpleDateFormat("dd-MM-yyyy");
         File outputFile = new File("reports/report-"+ requestReport.getPrjTitle()
                 +"-"+ dateFormat.format(new Date())+".docx");
-        BasicConfigurator.configure();
-        System.out.println(requestReport.getRepeatPage().size());
         setImagesToReport(requestReport);
         InputStream templateInputStream;
         OutputStream documentOutputStream = null;
         WordprocessingMLPackage document = null;
-        try {
-            if(templateRepository.findById((long) templateId).isPresent()) {
-                templateInputStream = new ByteArrayInputStream(templateRepository.findById((long) templateId).get().getFile());
+        try{
+            Template template = templateRepository.findById((long) templateId).orElseThrow();
+            try {
+                templateInputStream = new ByteArrayInputStream(template.getFile());
                 documentOutputStream = new FileOutputStream(outputFile);
                 document = WordprocessingMLPackage.load(templateInputStream);
             }
-            else {
-                throw new ResponseStatusException(NOT_FOUND, "Unable to find template");
+            catch (FileNotFoundException | Docx4JException e) {
+                e.printStackTrace();
             }
-
-        } catch (Docx4JException | IOException e) {
-            e.printStackTrace();
+        }
+        catch (Exception ex) {
+            throw new ResponseStatusException(NOT_FOUND, "Unable to find template");
         }
         int contentCounter = 0;
         ObjectFactory objectFactory = new ObjectFactory();
@@ -96,7 +95,7 @@ public class ReportController {
         } catch (IOException e) {
             e.printStackTrace();
         }
-        System.out.println("Elapsed time(milliseconds): "+ (System.currentTimeMillis() - time));
+        log.debug("Elapsed time(milliseconds): "+ (System.currentTimeMillis() - time));
         return outputDocumentArray;
     }
 

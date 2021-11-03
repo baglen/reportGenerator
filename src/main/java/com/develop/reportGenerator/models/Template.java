@@ -1,8 +1,6 @@
 package com.develop.reportGenerator.models;
 
 import com.fasterxml.jackson.annotation.JsonFormat;
-import org.springframework.context.annotation.Bean;
-import org.springframework.context.annotation.Scope;
 
 import javax.persistence.*;
 import java.time.ZonedDateTime;
@@ -24,14 +22,7 @@ public class Template {
     @Column(name = "file")
     private byte[] fileBytes;
 
-    public Template() {
-    }
-
-    @Bean
-    @Scope("prototype")
-    public Template template(){
-        return new Template();
-    }
+    public Template() {}
 
     public Template(String title, ZonedDateTime creationDate, byte[] fileBytes) {
         this.title = title;
