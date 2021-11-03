@@ -25,8 +25,10 @@ public class TemplateController {
         this.templateRepository = templateRepository;
     }
 
+    private static final org.slf4j.Logger log = org.slf4j.LoggerFactory.getLogger(ReportController.class);
+
     @RequestMapping(value = "/uploadTemplate", method = RequestMethod.POST)
-    public @ResponseBody Template uploadTemplate(@RequestParam("template") MultipartFile template) {
+    public Template uploadTemplate(@RequestParam("template") MultipartFile template) {
         if(!template.getOriginalFilename().isBlank()) {
             try {
                 if(templateRepository.existsTemplateByTitle(template.getOriginalFilename())) {
@@ -39,7 +41,7 @@ public class TemplateController {
                     return templateToUpload;
                 }
             } catch (IOException e) {
-                e.printStackTrace();
+                log.error(e.getMessage());
             }
         }
         else {
@@ -51,21 +53,16 @@ public class TemplateController {
     @Transactional
     @RequestMapping(value = "/deleteTemplate", method = RequestMethod.POST)
     public void deleteTemplate(@RequestParam("templateTitle") String templateTitle) {
-        if(templateTitle != null){
-            if(templateRepository.existsTemplateByTitle(templateTitle)) {
-                templateRepository.deleteByTitle(templateTitle);
-            }
-            else {
-                throw new ResponseStatusException(NOT_FOUND, "Unable to find template");
-            }
+        if(templateRepository.existsTemplateByTitle(templateTitle)) {
+            templateRepository.deleteByTitle(templateTitle);
         }
-        else{
-            throw new ResponseStatusException(NO_CONTENT, "Template title was null");
+        else {
+            throw new ResponseStatusException(NOT_FOUND, "Unable to find template");
         }
     }
 
     @GetMapping("/templates")
-    public @ResponseBody List<TemplateResponse> getTemplates(){
+    public List<TemplateResponse> getTemplates(){
         List<TemplateResponse> templates = new ArrayList<>();
         for(Template template: templateRepository.findAll()) {
             TemplateResponse templateResponse = new TemplateResponse(template.getId(),

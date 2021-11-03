@@ -38,7 +38,7 @@ public class ReportController {
     private static final org.slf4j.Logger log = org.slf4j.LoggerFactory.getLogger(ReportController.class);
 
     @PostMapping(value = "/makeReport", produces="application/vnd.openxmlformats-officedocument.wordprocessingml.document")
-    public @ResponseBody byte[] makeReport(@RequestBody Report requestReport, @RequestParam("templateId") int templateId){
+    public byte[] makeReport(@RequestBody Report requestReport, @RequestParam("templateId") Long templateId){
         long time = System.currentTimeMillis();
         DateFormat dateFormat = new SimpleDateFormat("dd-MM-yyyy");
         File outputFile = new File("reports/report-"+ requestReport.getPrjTitle()
@@ -47,19 +47,15 @@ public class ReportController {
         InputStream templateInputStream;
         OutputStream documentOutputStream = null;
         WordprocessingMLPackage document = null;
-        try{
-            Template template = templateRepository.findById((long) templateId).orElseThrow();
-            try {
-                templateInputStream = new ByteArrayInputStream(template.getFile());
-                documentOutputStream = new FileOutputStream(outputFile);
-                document = WordprocessingMLPackage.load(templateInputStream);
-            }
-            catch (FileNotFoundException | Docx4JException e) {
-                e.printStackTrace();
-            }
+        Template template = templateRepository.findById(templateId)
+                .orElseThrow(() -> new ResponseStatusException(NOT_FOUND, "Unable to find template"));
+        try {
+            templateInputStream = new ByteArrayInputStream(template.getFile());
+            documentOutputStream = new FileOutputStream(outputFile);
+            document = WordprocessingMLPackage.load(templateInputStream);
         }
-        catch (Exception ex) {
-            throw new ResponseStatusException(NOT_FOUND, "Unable to find template");
+        catch (FileNotFoundException | Docx4JException e) {
+            log.error(e.getMessage());
         }
         int contentCounter = 0;
         ObjectFactory objectFactory = new ObjectFactory();
@@ -74,7 +70,7 @@ public class ReportController {
                     try {
                         addImageToPara(document, objectFactory, imagesParagraph, image.getImageBytes());
                     } catch (Exception e) {
-                        e.printStackTrace();
+                        log.error(e.getMessage());
                     }
                 }
                 imagesParagraph = getFormatParagraph(objectFactory, imagesParagraph);
@@ -93,7 +89,7 @@ public class ReportController {
             documentInputStream = new FileInputStream(outputFile);
             outputDocumentArray = IOUtils.toByteArray(documentInputStream);
         } catch (IOException e) {
-            e.printStackTrace();
+            log.error(e.getMessage());
         }
         log.info("Elapsed time(milliseconds): "+ (System.currentTimeMillis() - time));
         return outputDocumentArray;
