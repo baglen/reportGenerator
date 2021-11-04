@@ -30,7 +30,7 @@ public class ReportUtil {
                                       byte[] bytes) throws Exception {
         R run = objectFactory.createR();
         BinaryPartAbstractImage imagePart = BinaryPartAbstractImage.createImagePart(wordMLPackage, bytes);
-        Inline inline = imagePart.createImageInline(null, null, 1, 2, 4550L,false);
+        Inline inline = imagePart.createImageInline(null, null, 1, 2, 4550L, false);
         Drawing drawing = objectFactory.createDrawing();
         drawing.getAnchorOrInline().add(inline);
         run.getContent().add(drawing);
@@ -43,11 +43,11 @@ public class ReportUtil {
         paragraph.getContent().add(spacerRun);
     }
 
-    public static void setImagesToReport(Report report){
-        for(RepeatPage repeatPage : report.getRepeatPage()) {
-            for(Content content : repeatPage.getContent()){
+    public static void setImagesToReport(Report report) {
+        for (RepeatPage repeatPage : report.getRepeatPage()) {
+            for (Content content : repeatPage.getContent()) {
                 List<Image> contentImages = new ArrayList<>();
-                for(String imagePath : content.getImage()){
+                for (String imagePath : content.getImage()) {
                     try {
                         contentImages.add(new Image(new FileInputStream(imagePath)));
                     } catch (IOException e) {
@@ -59,7 +59,7 @@ public class ReportUtil {
         }
     }
 
-    public static P makeTitleParagraph(String text, ObjectFactory objectFactory){
+    public static P makeTitleParagraph(String text, ObjectFactory objectFactory) {
         P titleParagraph = objectFactory.createP();
         R run = objectFactory.createR();
         RPr rpr = objectFactory.createRPr();
@@ -79,7 +79,7 @@ public class ReportUtil {
         return titleParagraph;
     }
 
-    public static P makeSpacerParagraph(ObjectFactory objectFactory){
+    public static P makeSpacerParagraph(ObjectFactory objectFactory) {
         R spacerRun = objectFactory.createR();
         Text spacer = objectFactory.createText();
         spacer.setValue("   ");

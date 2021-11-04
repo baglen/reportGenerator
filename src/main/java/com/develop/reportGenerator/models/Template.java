@@ -16,13 +16,14 @@ public class Template {
     private Long id;
     @Column(name = "title")
     private String title;
-    @JsonFormat(pattern="dd-MM-yyyy HH:mm")
+    @JsonFormat(pattern = "dd-MM-yyyy HH:mm")
     @Column(name = "creation_date")
     private ZonedDateTime creationDate;
     @Column(name = "file")
     private byte[] fileBytes;
 
-    public Template() {}
+    public Template() {
+    }
 
     public Template(String title, ZonedDateTime creationDate, byte[] fileBytes) {
         this.title = title;

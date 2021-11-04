@@ -1,6 +1,5 @@
 package com.develop.reportGenerator.services;
 
-import com.develop.reportGenerator.controllers.ReportController;
 import com.develop.reportGenerator.models.Template;
 import com.develop.reportGenerator.repositories.TemplateRepository;
 import com.develop.reportGenerator.response.TemplateResponse;
@@ -18,34 +17,32 @@ import static org.springframework.http.HttpStatus.*;
 
 @Service
 public class TemplateServiceImpl implements TemplateService {
+    private static final org.slf4j.Logger log = org.slf4j.LoggerFactory.getLogger(TemplateServiceImpl.class);
 
     final TemplateRepository templateRepository;
-
-    private static final org.slf4j.Logger log = org.slf4j.LoggerFactory.getLogger(ReportController.class);
 
     public TemplateServiceImpl(TemplateRepository templateRepository) {
         this.templateRepository = templateRepository;
     }
 
     @Override
-    public Template uploadTemplate(MultipartFile template) {
-        if(!template.getOriginalFilename().isBlank()) {
+    public TemplateResponse uploadTemplate(MultipartFile template) {
+        if (!template.getOriginalFilename().isBlank()) {
             try {
-                if(templateRepository.existsTemplateByTitle(template.getOriginalFilename())) {
+                if (templateRepository.existsTemplateByTitle(template.getOriginalFilename())) {
                     throw new ResponseStatusException(BAD_REQUEST, "Template already exists");
-                }
-                else {
+                } else {
                     Template templateToUpload = new Template(template.getOriginalFilename(),
                             ZonedDateTime.now(), template.getBytes());
                     templateRepository.save(templateToUpload);
-                    return templateToUpload;
+                    return new TemplateResponse(templateToUpload.getId(), templateToUpload.getTitle(),
+                            templateToUpload.getCreationDate());
                 }
             } catch (IOException e) {
                 log.error("Failed to read template file", e);
                 throw new ResponseStatusException(INTERNAL_SERVER_ERROR);
             }
-        }
-        else {
+        } else {
             throw new ResponseStatusException(NO_CONTENT, "Template is not set");
         }
     }
@@ -53,10 +50,9 @@ public class TemplateServiceImpl implements TemplateService {
     @Override
     @Transactional
     public void deleteTemplate(String templateTitle) {
-        if(templateRepository.existsTemplateByTitle(templateTitle)) {
+        if (templateRepository.existsTemplateByTitle(templateTitle)) {
             templateRepository.deleteByTitle(templateTitle);
-        }
-        else {
+        } else {
             throw new ResponseStatusException(NOT_FOUND, "Unable to find template");
         }
     }
@@ -64,7 +60,7 @@ public class TemplateServiceImpl implements TemplateService {
     @Override
     public List<TemplateResponse> getTemplates() {
         List<TemplateResponse> templates = new ArrayList<>();
-        for(Template template: templateRepository.findAll()) {
+        for (Template template : templateRepository.findAll()) {
             TemplateResponse templateResponse = new TemplateResponse(template.getId(),
                     template.getTitle(), template.getCreationDate());
             templates.add(templateResponse);

@@ -1,6 +1,6 @@
 package com.develop.reportGenerator.controllers;
 
-import com.develop.reportGenerator.models.Template;
+
 import com.develop.reportGenerator.response.TemplateResponse;
 import com.develop.reportGenerator.services.TemplateService;
 import org.springframework.web.bind.annotation.*;
@@ -18,7 +18,7 @@ public class TemplateController {
     }
 
     @RequestMapping(value = "/uploadTemplate", method = RequestMethod.POST)
-    public Template uploadTemplate(@RequestParam("template") MultipartFile template) {
+    public TemplateResponse uploadTemplate(@RequestParam("template") MultipartFile template) {
         return templateService.uploadTemplate(template);
     }
 
@@ -28,7 +28,7 @@ public class TemplateController {
     }
 
     @GetMapping("/templates")
-    public List<TemplateResponse> getTemplates(){
+    public List<TemplateResponse> getTemplates() {
         return templateService.getTemplates();
     }
 }

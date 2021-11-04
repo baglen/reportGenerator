@@ -1,4 +1,3 @@
-
 package com.develop.reportGenerator.request;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
