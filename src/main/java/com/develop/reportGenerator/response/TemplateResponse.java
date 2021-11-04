@@ -1,16 +1,15 @@
 package com.develop.reportGenerator.response;
 
-import com.fasterxml.jackson.annotation.JsonProperty;
+
+import com.fasterxml.jackson.annotation.JsonFormat;
 
 import java.time.ZonedDateTime;
 
 public class TemplateResponse {
 
-    @JsonProperty("id")
     private Long id;
-    @JsonProperty("title")
     private String title;
-    @JsonProperty("creationDate")
+    @JsonFormat(pattern="dd-MM-yyyy HH:mm")
     private ZonedDateTime creationDate;
 
     public TemplateResponse(){}
@@ -21,33 +20,14 @@ public class TemplateResponse {
         this.creationDate = creationDate;
     }
 
-    @JsonProperty("id")
     public Long getId() {
         return id;
     }
-
-    @JsonProperty("id")
-    public void setId(Long id) {
-        this.id = id;
-    }
-
-    @JsonProperty("title")
     public String getTitle() {
         return title;
     }
-
-    @JsonProperty("title")
-    public void setTitle(String title) {
-        this.title = title;
-    }
-
-    @JsonProperty("creationDate")
     public ZonedDateTime getCreationDate() {
         return creationDate;
     }
 
-    @JsonProperty("creationDate")
-    public void setCreationDate(ZonedDateTime creationDate) {
-        this.creationDate = creationDate;
-    }
 }
