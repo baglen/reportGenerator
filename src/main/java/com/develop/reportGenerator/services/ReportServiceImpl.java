@@ -8,6 +8,7 @@ import com.develop.reportGenerator.request.Content;
 import com.develop.reportGenerator.request.RepeatPage;
 import com.develop.reportGenerator.request.Report;
 import org.docx4j.openpackaging.exceptions.Docx4JException;
+import org.docx4j.openpackaging.io.SaveToZipFile;
 import org.docx4j.openpackaging.packages.WordprocessingMLPackage;
 import org.docx4j.org.apache.poi.util.IOUtils;
 import org.docx4j.wml.ObjectFactory;
@@ -38,22 +39,12 @@ public class ReportServiceImpl implements ReportService {
     @Override
     public byte[] makeReport(Report requestReport, Long templateId) {
         long time = System.currentTimeMillis();
-        DateFormat dateFormat = new SimpleDateFormat("dd-MM-yyyy");
-        File outputFile = new File("reports/report-" + requestReport.getPrjTitle()
-                + "-" + dateFormat.format(new Date()) + ".docx");
         setImagesToReport(requestReport);
-        InputStream templateInputStream;
-        OutputStream documentOutputStream = null;
         WordprocessingMLPackage document;
         Template template = templateRepository.findById(templateId)
                 .orElseThrow(() -> new TemplateNotFoundException(templateId));
-        templateInputStream = new ByteArrayInputStream(template.getFile());
         try {
-            document = WordprocessingMLPackage.load(templateInputStream);
-            documentOutputStream = new FileOutputStream(outputFile);
-        } catch (FileNotFoundException e) {
-            log.error("Output file not found", e);
-            throw new ReportException("Output file not found");
+            document = WordprocessingMLPackage.load(new ByteArrayInputStream(template.getFile()));
         } catch (Docx4JException e) {
             log.error("Error occurred while loading template", e);
             throw new ReportException("Error occurred while loading template");
@@ -82,22 +73,14 @@ public class ReportServiceImpl implements ReportService {
                 }
             }
         }
-        DocxStamper stamper = new DocxStamperConfiguration().build();
-        stamper.stamp(document, requestReport, documentOutputStream);
-        FileInputStream documentInputStream;
-        byte[] outputDocumentArray;
+        ByteArrayOutputStream file = new ByteArrayOutputStream();
         try {
-            documentOutputStream.close();
-            documentInputStream = new FileInputStream(outputFile);
-            outputDocumentArray = IOUtils.toByteArray(documentInputStream);
-        } catch (FileNotFoundException e) {
-            log.error("Report file not found", e);
-            throw new ReportException("Report file not found");
-        } catch (IOException e) {
-            log.error("Error occurred while converting report", e);
-            throw new ReportException("Error occurred while converting report");
+            document.save(file);
+        } catch (Docx4JException e) {
+            log.error("Error occurred while saving report", e);
+            throw new ReportException("Error occurred while saving report");
         }
         log.info("Elapsed time(milliseconds): " + (System.currentTimeMillis() - time));
-        return outputDocumentArray;
+        return file.toByteArray();
     }
 }
