@@ -8,20 +8,14 @@ import com.develop.reportGenerator.request.Content;
 import com.develop.reportGenerator.request.RepeatPage;
 import com.develop.reportGenerator.request.Report;
 import org.docx4j.openpackaging.exceptions.Docx4JException;
-import org.docx4j.openpackaging.io.SaveToZipFile;
 import org.docx4j.openpackaging.packages.WordprocessingMLPackage;
-import org.docx4j.org.apache.poi.util.IOUtils;
 import org.docx4j.wml.ObjectFactory;
 import org.docx4j.wml.P;
 import org.springframework.stereotype.Service;
-import org.wickedsource.docxstamper.DocxStamper;
-import org.wickedsource.docxstamper.DocxStamperConfiguration;
 import org.wickedsource.docxstamper.replace.typeresolver.image.Image;
 
-import java.io.*;
-import java.text.DateFormat;
-import java.text.SimpleDateFormat;
-import java.util.Date;
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
 
 import static com.develop.reportGenerator.utils.ReportUtil.*;
 
