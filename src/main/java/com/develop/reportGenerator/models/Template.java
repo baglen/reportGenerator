@@ -16,7 +16,6 @@ public class Template {
     private Long id;
     @Column(name = "title")
     private String title;
-    @JsonFormat(pattern = "dd-MM-yyyy HH:mm")
     @Column(name = "creation_date")
     private ZonedDateTime creationDate;
     @Column(name = "file")

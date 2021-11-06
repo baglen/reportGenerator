@@ -1,19 +1,21 @@
 package com.develop.reportGenerator.services;
 
+import com.develop.reportGenerator.exceptions.TemplateAlreadyExistsException;
+import com.develop.reportGenerator.exceptions.TemplateException;
+import com.develop.reportGenerator.exceptions.TemplateNotFoundException;
 import com.develop.reportGenerator.models.Template;
 import com.develop.reportGenerator.repositories.TemplateRepository;
 import com.develop.reportGenerator.response.TemplateResponse;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
-import org.springframework.web.server.ResponseStatusException;
 
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
-import static org.springframework.http.HttpStatus.*;
 
 @Service
 public class TemplateServiceImpl implements TemplateService {
@@ -26,11 +28,11 @@ public class TemplateServiceImpl implements TemplateService {
     }
 
     @Override
-    public TemplateResponse uploadTemplate(MultipartFile template) {
+    public TemplateResponse uploadTemplate(MultipartFile template) throws FileNotFoundException {
         if (!template.getOriginalFilename().isBlank()) {
             try {
                 if (templateRepository.existsTemplateByTitle(template.getOriginalFilename())) {
-                    throw new ResponseStatusException(BAD_REQUEST, "Template already exists");
+                    throw new TemplateAlreadyExistsException(template.getOriginalFilename());
                 } else {
                     Template templateToUpload = new Template(template.getOriginalFilename(),
                             ZonedDateTime.now(), template.getBytes());
@@ -40,10 +42,10 @@ public class TemplateServiceImpl implements TemplateService {
                 }
             } catch (IOException e) {
                 log.error("Failed to read template file", e);
-                throw new ResponseStatusException(INTERNAL_SERVER_ERROR);
+                throw new TemplateException("Failed to read template file");
             }
         } else {
-            throw new ResponseStatusException(NO_CONTENT, "Template is not set");
+            throw new FileNotFoundException();
         }
     }
 
@@ -53,7 +55,7 @@ public class TemplateServiceImpl implements TemplateService {
         if (templateRepository.existsTemplateByTitle(templateTitle)) {
             templateRepository.deleteByTitle(templateTitle);
         } else {
-            throw new ResponseStatusException(NOT_FOUND, "Unable to find template");
+            throw new TemplateNotFoundException(templateTitle);
         }
     }
 

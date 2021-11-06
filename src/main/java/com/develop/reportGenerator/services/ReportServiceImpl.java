@@ -1,5 +1,7 @@
 package com.develop.reportGenerator.services;
 
+import com.develop.reportGenerator.exceptions.ReportException;
+import com.develop.reportGenerator.exceptions.TemplateNotFoundException;
 import com.develop.reportGenerator.models.Template;
 import com.develop.reportGenerator.repositories.TemplateRepository;
 import com.develop.reportGenerator.request.Content;
@@ -11,7 +13,6 @@ import org.docx4j.org.apache.poi.util.IOUtils;
 import org.docx4j.wml.ObjectFactory;
 import org.docx4j.wml.P;
 import org.springframework.stereotype.Service;
-import org.springframework.web.server.ResponseStatusException;
 import org.wickedsource.docxstamper.DocxStamper;
 import org.wickedsource.docxstamper.DocxStamperConfiguration;
 import org.wickedsource.docxstamper.replace.typeresolver.image.Image;
@@ -22,8 +23,7 @@ import java.text.SimpleDateFormat;
 import java.util.Date;
 
 import static com.develop.reportGenerator.utils.ReportUtil.*;
-import static org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR;
-import static org.springframework.http.HttpStatus.NOT_FOUND;
+
 
 @Service
 public class ReportServiceImpl implements ReportService {
@@ -43,20 +43,20 @@ public class ReportServiceImpl implements ReportService {
                 + "-" + dateFormat.format(new Date()) + ".docx");
         setImagesToReport(requestReport);
         InputStream templateInputStream;
-        OutputStream documentOutputStream;
+        OutputStream documentOutputStream = null;
         WordprocessingMLPackage document;
         Template template = templateRepository.findById(templateId)
-                .orElseThrow(() -> new ResponseStatusException(NOT_FOUND, "Unable to find template"));
+                .orElseThrow(() -> new TemplateNotFoundException(templateId));
+        templateInputStream = new ByteArrayInputStream(template.getFile());
         try {
-            templateInputStream = new ByteArrayInputStream(template.getFile());
-            documentOutputStream = new FileOutputStream(outputFile);
             document = WordprocessingMLPackage.load(templateInputStream);
+            documentOutputStream = new FileOutputStream(outputFile);
         } catch (FileNotFoundException e) {
             log.error("Output file not found", e);
-            throw new ResponseStatusException(INTERNAL_SERVER_ERROR);
+            throw new ReportException("Output file not found");
         } catch (Docx4JException e) {
             log.error("Error occurred while loading template", e);
-            throw new ResponseStatusException(INTERNAL_SERVER_ERROR);
+            throw new ReportException("Error occurred while loading template");
         }
         int contentCounter = 0;
         ObjectFactory objectFactory = new ObjectFactory();
@@ -72,7 +72,7 @@ public class ReportServiceImpl implements ReportService {
                         addImageToPara(document, objectFactory, imagesParagraph, image.getImageBytes());
                     } catch (Exception e) {
                         log.error("Error occurred while attaching images", e);
-                        throw new ResponseStatusException(INTERNAL_SERVER_ERROR);
+                        throw new ReportException("Error occurred while attaching images");
                     }
                 }
                 imagesParagraph = getFormatParagraph(objectFactory, imagesParagraph);
@@ -92,10 +92,10 @@ public class ReportServiceImpl implements ReportService {
             outputDocumentArray = IOUtils.toByteArray(documentInputStream);
         } catch (FileNotFoundException e) {
             log.error("Report file not found", e);
-            throw new ResponseStatusException(INTERNAL_SERVER_ERROR);
+            throw new ReportException("Report file not found");
         } catch (IOException e) {
             log.error("Error occurred while converting report", e);
-            throw new ResponseStatusException(INTERNAL_SERVER_ERROR);
+            throw new ReportException("Error occurred while converting report");
         }
         log.info("Elapsed time(milliseconds): " + (System.currentTimeMillis() - time));
         return outputDocumentArray;
