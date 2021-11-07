@@ -12,6 +12,8 @@ import org.docx4j.openpackaging.packages.WordprocessingMLPackage;
 import org.docx4j.wml.ObjectFactory;
 import org.docx4j.wml.P;
 import org.springframework.stereotype.Service;
+import org.wickedsource.docxstamper.DocxStamper;
+import org.wickedsource.docxstamper.DocxStamperConfiguration;
 import org.wickedsource.docxstamper.replace.typeresolver.image.Image;
 
 import java.io.ByteArrayInputStream;
@@ -74,6 +76,8 @@ public class ReportServiceImpl implements ReportService {
             log.error("Error occurred while saving report", e);
             throw new ReportException("Error occurred while saving report");
         }
+        DocxStamper stamper = new DocxStamperConfiguration().build();
+        stamper.stamp(document, requestReport, file);
         log.info("Elapsed time(milliseconds): " + (System.currentTimeMillis() - time));
         return file.toByteArray();
     }
